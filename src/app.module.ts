@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { createObserveModule } from '@nestjs/observe';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { ListsModule } from './lists/lists.module.js';
+import { CardsModule } from './cards/cards.module.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 
@@ -20,6 +22,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     }),
     PrismaModule,
     AuthModule,
+    ListsModule,
+    CardsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
