@@ -52,7 +52,6 @@ export class CardsService {
     return { deleted: true };
   }
 
-  /** Vérifie que la liste existe et appartient bien à l'utilisateur. */
   private async assertListOwnership(ownerId: string, listId: string) {
     const list = await this.prisma.list.findUnique({ where: { id: listId } });
 
