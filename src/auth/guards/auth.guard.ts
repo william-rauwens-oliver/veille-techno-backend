@@ -7,11 +7,6 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
-/**
- * Vérifie le token JWT envoyé dans l'en-tête "Authorization: Bearer <token>".
- * Si le token est valide, on charge l'utilisateur et on l'attache à la requête
- * (request.user) pour que les contrôleurs puissent le récupérer.
- */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(

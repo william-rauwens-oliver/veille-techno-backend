@@ -1,114 +1,186 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Kanban Board API — Veille technologique backend (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST d'un **Kanban Board** développée avec **NestJS**, **Prisma** et **PostgreSQL**, dans le cadre d'une veille technologique backend comparant NestJS, Symfony et Spring Boot.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+L'API permet d'inscrire et connecter des utilisateurs, de gérer leurs droits, et de créer / modifier / supprimer des listes et des cartes. Toute la documentation est exposée via **Swagger** sur `/api`.
 
-## Description
+## Sommaire
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- [Stack technique](#stack-technique)
+- [Fonctionnalités](#fonctionnalités)
+- [Prérequis](#prérequis)
+- [Installation et lancement](#installation-et-lancement)
+- [Documentation Swagger](#documentation-swagger)
+- [Modèle de données](#modèle-de-données)
+- [Endpoints](#endpoints)
+- [Authentification et droits](#authentification-et-droits)
+- [Tests](#tests)
+- [Scripts npm](#scripts-npm)
+- [Structure du projet](#structure-du-projet)
 
-## Project setup
+## Stack technique
 
-```bash
-$ npm install
-```
+| Rôle                 | Technologie                          |
+| -------------------- | ------------------------------------ |
+| Framework            | NestJS 12 (Node.js, TypeScript, ESM) |
+| ORM                  | Prisma 6                             |
+| Base de données      | PostgreSQL 16 (via Docker)           |
+| Authentification     | JWT (`@nestjs/jwt`)                  |
+| Hash de mot de passe | bcryptjs                             |
+| Validation           | class-validator / class-transformer  |
+| Documentation        | Swagger (`@nestjs/swagger`)          |
+| Tests                | Vitest + Supertest                   |
 
-## Compile and run the project
+## Fonctionnalités
 
-```bash
-# development
-$ npm run start
+- Inscription et connexion d'un utilisateur (JWT)
+- Modification des informations d'un utilisateur, **droits (rôle) inclus**
+- Création, lecture, modification et suppression de listes
+- Création, lecture, modification et suppression de cartes dans une liste
+- Documentation de l'API via Swagger (`/api`)
 
-# watch mode
-$ npm run start:dev
+## Prérequis
 
-# production mode
-$ npm run start:prod
-```
+- **Node.js** >= 20
+- **npm** >= 10
+- **Docker** (pour lancer PostgreSQL)
 
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Installation et lancement
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# 1. Installer les dépendances
+npm install
+
+# 2. Créer le fichier d'environnement
+cp .env.example .env
+
+# 3. Démarrer PostgreSQL (conteneur exposé sur le port 5433)
+docker compose up -d
+
+# 4. Appliquer les migrations et générer le client Prisma
+npx prisma migrate dev
+
+# 5. Lancer l'API en mode développement
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+L'API démarre sur `http://localhost:3000` et Swagger est disponible sur `http://localhost:3000/api`.
 
-## Observability
+> Le `docker-compose.yml` mappe le port hôte `5433` vers `5432` du conteneur, pour éviter tout conflit avec un PostgreSQL déjà présent (par exemple MAMP). Le `DATABASE_URL` du `.env.example` pointe déjà sur `5433`.
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+### Variables d'environnement
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+| Variable         | Description                             | Exemple                                                          |
+| ---------------- | --------------------------------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`   | Chaîne de connexion PostgreSQL (Prisma) | `postgresql://kanban:kanban@localhost:5433/kanban?schema=public` |
+| `JWT_SECRET`     | Secret de signature des tokens JWT      | `dev-secret-change-me`                                           |
+| `JWT_EXPIRES_IN` | Durée de validité du token              | `1d`                                                             |
+| `PORT`           | Port HTTP de l'API                      | `3000`                                                           |
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+## Documentation Swagger
 
-## Resources
+Une fois l'API lancée, ouvrez `http://localhost:3000/api`.
 
-Check out a few resources that may come in handy when working with NestJS:
+Vous y trouvez tous les endpoints regroupés par tag (`auth`, `users`, `lists`, `cards`). Pour tester les routes protégées :
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+1. Appelez `POST /auth/login` (ou `/auth/register`) pour obtenir un `accessToken`.
+2. Cliquez sur **Authorize** en haut de Swagger et collez le token.
+3. Toutes les requêtes suivantes seront authentifiées.
 
-## Support
+## Modèle de données
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```
+User (id, email, name, password, role[USER|ADMIN], createdAt, updatedAt)
+  └── 1..n List (id, title, position, ownerId, createdAt, updatedAt)
+                └── 1..n Card (id, title, description, position, listId, createdAt, updatedAt)
+```
 
-## Stay in touch
+- Un utilisateur possède plusieurs listes.
+- Une liste contient plusieurs cartes.
+- Supprimer une liste supprime ses cartes en cascade.
+- Chaque utilisateur ne voit et ne gère que ses propres listes et cartes.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Endpoints
 
-## License
+### Auth (`/auth`)
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+| Méthode | Route            | Auth | Description                      |
+| ------- | ---------------- | ---- | -------------------------------- |
+| POST    | `/auth/register` | —    | Inscrire un nouvel utilisateur   |
+| POST    | `/auth/login`    | —    | Se connecter et récupérer un JWT |
+
+### Users (`/users`)
+
+| Méthode | Route        | Auth        | Description                                            |
+| ------- | ------------ | ----------- | ----------------------------------------------------- |
+| GET     | `/users`     | JWT (ADMIN) | Lister tous les utilisateurs                           |
+| GET     | `/users/:id` | JWT         | Récupérer un utilisateur                               |
+| PATCH   | `/users/:id` | JWT         | Modifier un utilisateur (le champ `role` = admin only)|
+
+### Lists (`/lists`)
+
+| Méthode | Route        | Auth | Description                           |
+| ------- | ------------ | ---- | ------------------------------------- |
+| POST    | `/lists`     | JWT  | Créer une liste                       |
+| GET     | `/lists`     | JWT  | Lister ses listes (avec leurs cartes) |
+| GET     | `/lists/:id` | JWT  | Récupérer une liste et ses cartes     |
+| PATCH   | `/lists/:id` | JWT  | Modifier une liste                    |
+| DELETE  | `/lists/:id` | JWT  | Supprimer une liste (et ses cartes)   |
+
+### Cards (`/cards`)
+
+| Méthode | Route        | Auth | Description                                        |
+| ------- | ------------ | ---- | ------------------------------------------------- |
+| POST    | `/cards`     | JWT  | Créer une carte dans une liste                    |
+| GET     | `/cards/:id` | JWT  | Récupérer une carte                               |
+| PATCH   | `/cards/:id` | JWT  | Modifier une carte (titre, description, position) |
+| DELETE  | `/cards/:id` | JWT  | Supprimer une carte                               |
+
+## Authentification et droits
+
+- L'authentification repose sur des **JWT Bearer**. Le token est renvoyé par `/auth/register` et `/auth/login`.
+- Les routes protégées utilisent `AuthGuard` : il lit l'en-tête `Authorization`, vérifie le token avec `JwtService` et attache l'utilisateur à la requête.
+- La gestion des droits repose sur un rôle `USER` ou `ADMIN` :
+  - Un utilisateur peut modifier son propre compte.
+  - Seul un **ADMIN** peut modifier le `role` d'un utilisateur (via `RolesGuard` et le décorateur `@Roles(Role.ADMIN)`) et lister tous les utilisateurs.
+- Chaque utilisateur est isolé : il ne peut agir que sur ses propres listes et cartes.
+
+## Tests
+
+```bash
+# Tests unitaires
+npm test
+
+# Tests end-to-end (nécessitent PostgreSQL lancé)
+npm run test:e2e
+```
+
+## Scripts npm
+
+| Script               | Rôle                                  |
+| -------------------- | ------------------------------------- |
+| `npm run start:dev`  | API en mode watch                     |
+| `npm run build`      | Compilation TypeScript                |
+| `npm run start:prod` | Lancer le build (`dist/main`)         |
+| `npm test`           | Tests unitaires                       |
+| `npm run test:e2e`   | Tests end-to-end                      |
+| `npm run lint`       | Analyse statique (oxlint)             |
+
+## Structure du projet
+
+```
+src/
+├── main.ts                 # Bootstrap, Swagger, ValidationPipe
+├── app.module.ts           # Module racine
+├── prisma/                 # PrismaService + module global
+├── auth/                   # Inscription, connexion, JWT, guards, décorateurs
+│   ├── guards/             # AuthGuard (JWT), RolesGuard (droits)
+│   └── decorators/         # @CurrentUser, @Roles
+├── users/                  # Gestion des utilisateurs et des droits
+├── lists/                  # CRUD des listes
+└── cards/                  # CRUD des cartes
+prisma/
+├── schema.prisma           # Modèle de données
+└── migrations/             # Migrations SQL
+docker-compose.yml          # PostgreSQL
+```
