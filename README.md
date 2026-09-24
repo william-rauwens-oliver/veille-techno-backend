@@ -47,26 +47,39 @@ L'API permet d'inscrire et connecter des utilisateurs, de gérer leurs droits, e
 
 ## Installation et lancement
 
+Installez d'abord les dépendances du projet.
+
 ```bash
-# 1. Installer les dépendances
 npm install
+```
 
-# 2. Créer le fichier d'environnement
+Créez ensuite le fichier d'environnement à partir de l'exemple fourni.
+
+```bash
 cp .env.example .env
+```
 
-# 3. Démarrer PostgreSQL (conteneur exposé sur le port 5433)
+Démarrez PostgreSQL dans un conteneur Docker.
+
+```bash
 docker compose up -d
+```
 
-# 4. Appliquer les migrations et générer le client Prisma
+Appliquez les migrations et générez le client Prisma.
+
+```bash
 npx prisma migrate dev
+```
 
-# 5. Lancer l'API en mode développement
+Lancez enfin l'API en mode développement.
+
+```bash
 npm run start:dev
 ```
 
 L'API démarre sur `http://localhost:3000` et Swagger est disponible sur `http://localhost:3000/api`.
 
-> Le `docker-compose.yml` mappe le port hôte `5433` vers `5432` du conteneur, pour éviter tout conflit avec un PostgreSQL déjà présent (par exemple MAMP). Le `DATABASE_URL` du `.env.example` pointe déjà sur `5433`.
+Le fichier `docker-compose.yml` mappe le port hôte `5433` vers le port `5432` du conteneur, afin d'éviter tout conflit avec un PostgreSQL déjà présent sur la machine, par exemple celui de MAMP. Le `DATABASE_URL` du fichier `.env.example` pointe donc déjà sur le port `5433`.
 
 ### Variables d'environnement
 
@@ -147,11 +160,15 @@ User (id, email, name, password, role[USER|ADMIN], createdAt, updatedAt)
 
 ## Tests
 
-```bash
-# Tests unitaires
-npm test
+Lancez les tests unitaires.
 
-# Tests end-to-end (nécessitent PostgreSQL lancé)
+```bash
+npm test
+```
+
+Lancez les tests end-to-end (PostgreSQL doit être démarré).
+
+```bash
 npm run test:e2e
 ```
 
@@ -170,17 +187,27 @@ npm run test:e2e
 
 ```
 src/
-├── main.ts                 # Bootstrap, Swagger, ValidationPipe
-├── app.module.ts           # Module racine
-├── prisma/                 # PrismaService + module global
-├── auth/                   # Inscription, connexion, JWT, guards, décorateurs
-│   ├── guards/             # AuthGuard (JWT), RolesGuard (droits)
-│   └── decorators/         # @CurrentUser, @Roles
-├── users/                  # Gestion des utilisateurs et des droits
-├── lists/                  # CRUD des listes
-└── cards/                  # CRUD des cartes
+├── main.ts
+├── app.module.ts
+├── prisma/
+├── auth/
+│   ├── guards/
+│   └── decorators/
+├── users/
+├── lists/
+└── cards/
 prisma/
-├── schema.prisma           # Modèle de données
-└── migrations/             # Migrations SQL
-docker-compose.yml          # PostgreSQL
+├── schema.prisma
+└── migrations/
+docker-compose.yml
 ```
+
+- `main.ts` démarre l'application et configure Swagger et la validation des données.
+- `app.module.ts` est le module racine qui assemble tous les autres modules.
+- `prisma/` contient le `PrismaService` et le module global de connexion à la base.
+- `auth/` gère l'inscription, la connexion et les JWT, avec ses guards (`AuthGuard`, `RolesGuard`) et ses décorateurs (`@CurrentUser`, `@Roles`).
+- `users/` gère la consultation et la modification des utilisateurs ainsi que leurs droits.
+- `lists/` gère les opérations sur les listes.
+- `cards/` gère les opérations sur les cartes.
+- `prisma/schema.prisma` décrit le modèle de données et `prisma/migrations/` contient les migrations SQL.
+- `docker-compose.yml` définit le conteneur PostgreSQL.
