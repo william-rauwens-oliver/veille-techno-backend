@@ -1,4 +1,4 @@
-# Kanban Board API — Veille technologique backend (NestJS)
+# Kanban Board API
 
 API REST d'un **Kanban Board** développée avec **NestJS**, **Prisma** et **PostgreSQL**, dans le cadre d'une veille technologique backend comparant NestJS, Symfony et Spring Boot.
 
