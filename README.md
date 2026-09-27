@@ -13,8 +13,11 @@ L'API permet d'inscrire et connecter des utilisateurs, de gérer leurs droits, e
 - [Documentation Swagger](#documentation-swagger)
 - [Modèle de données](#modèle-de-données)
 - [Endpoints](#endpoints)
+- [API GraphQL](#api-graphql)
 - [Authentification et droits](#authentification-et-droits)
+- [Données de démonstration (seed)](#données-de-démonstration-seed)
 - [Tests](#tests)
+- [Performance et optimisation](#performance-et-optimisation)
 - [Scripts npm](#scripts-npm)
 - [Structure du projet](#structure-du-projet)
 
@@ -29,6 +32,7 @@ L'API permet d'inscrire et connecter des utilisateurs, de gérer leurs droits, e
 | Hash de mot de passe | bcryptjs                             |
 | Validation           | class-validator / class-transformer  |
 | Documentation        | Swagger (`@nestjs/swagger`)          |
+| API alternative      | GraphQL (`@nestjs/graphql` + Apollo) |
 | Tests                | Vitest + Supertest                   |
 
 ## Fonctionnalités
@@ -38,6 +42,8 @@ L'API permet d'inscrire et connecter des utilisateurs, de gérer leurs droits, e
 - Création, lecture, modification et suppression de listes
 - Création, lecture, modification et suppression de cartes dans une liste
 - Documentation de l'API via Swagger (`/api`)
+- API **GraphQL** alternative sur `/graphql` (query et mutations sur les listes et cartes)
+- Données de démonstration (seed) et tests d'intégration
 
 ## Prérequis
 
@@ -149,6 +155,37 @@ User (id, email, name, password, role[USER|ADMIN], createdAt, updatedAt)
 | PATCH   | `/cards/:id` | JWT  | Modifier une carte (titre, description, position) |
 | DELETE  | `/cards/:id` | JWT  | Supprimer une carte                               |
 
+## API GraphQL
+
+En complément de l'API REST, une API **GraphQL** est exposée sur `http://localhost:3000/graphql` (schéma généré en code-first). Elle réutilise les mêmes services et la même sécurité JWT (en-tête `Authorization: Bearer <token>`).
+
+Exemples :
+
+```graphql
+query {
+  lists {
+    id
+    title
+    position
+    cards { id title }
+  }
+}
+
+mutation {
+  createList(input: { title: "To Do" }) {
+    id
+    title
+  }
+}
+
+mutation {
+  createCard(input: { title: "Ma tâche", listId: "<listId>" }) {
+    id
+    title
+  }
+}
+```
+
 ## Authentification et droits
 
 - L'authentification repose sur des **JWT Bearer**. Le token est renvoyé par `/auth/register` et `/auth/login`.
@@ -158,19 +195,38 @@ User (id, email, name, password, role[USER|ADMIN], createdAt, updatedAt)
   - Seul un **ADMIN** peut modifier le `role` d'un utilisateur (via `RolesGuard` et le décorateur `@Roles(Role.ADMIN)`) et lister tous les utilisateurs.
 - Chaque utilisateur est isolé : il ne peut agir que sur ses propres listes et cartes.
 
+## Données de démonstration (seed)
+
+Un script de seed insère des données de démonstration : deux utilisateurs et un tableau prêt à l'emploi.
+
+```bash
+npm run db:seed
+```
+
+| Email               | Mot de passe | Rôle  |
+| ------------------- | ------------ | ----- |
+| `admin@example.com` | `secret123`  | ADMIN |
+| `jane@example.com`  | `secret123`  | USER  |
+
+L'utilisateur `jane` reçoit trois listes (`To Do`, `En cours`, `Terminé`) avec quelques cartes.
+
 ## Tests
 
-Lancez les tests unitaires.
+La suite est composée de tests d'intégration qui démarrent l'application et appellent les vraies routes REST et GraphQL à travers la base PostgreSQL, qui doit donc être lancée.
 
 ```bash
 npm test
 ```
 
-Lancez les tests end-to-end (PostgreSQL doit être démarré).
+## Performance et optimisation
 
-```bash
-npm run test:e2e
-```
+NestJS s'appuie sur le runtime **non bloquant** de Node.js : les entrées/sorties (base de données, réseau) ne bloquent pas le thread principal, ce qui permet de tenir de nombreuses requêtes simultanées avec une faible empreinte mémoire. Plusieurs pistes permettent d'aller plus loin :
+
+- **Index de base de données** : ajouter des index Prisma sur les colonnes filtrées (`ownerId` des listes, `listId` des cartes) pour accélérer les lectures.
+- **Pagination** : paginer `GET /lists` et les cartes quand les volumes augmentent, plutôt que de tout renvoyer.
+- **Cache** : mettre en cache les réponses de lecture fréquentes (par exemple avec `@nestjs/cache-manager` ou Redis).
+- **Sélection de champs** : ne demander que les champs nécessaires (Prisma `select`, ou la sélection native de GraphQL) pour réduire la charge.
+- **Scalabilité horizontale** : l'API étant *stateless* (JWT), elle peut être répliquée derrière un load balancer sans session partagée.
 
 ## Scripts npm
 
@@ -179,8 +235,8 @@ npm run test:e2e
 | `npm run start:dev`  | API en mode watch                     |
 | `npm run build`      | Compilation TypeScript                |
 | `npm run start:prod` | Lancer le build (`dist/main`)         |
-| `npm test`           | Tests unitaires                       |
-| `npm run test:e2e`   | Tests end-to-end                      |
+| `npm test`           | Tests d'intégration (REST + GraphQL)  |
+| `npm run db:seed`    | Insérer les données de démonstration  |
 | `npm run lint`       | Analyse statique (oxlint)             |
 
 ## Structure du projet
@@ -195,12 +251,17 @@ src/
 │   └── decorators/
 ├── users/
 ├── lists/
-└── cards/
+├── cards/
+└── graphql/
 prisma/
 ├── schema.prisma
-└── migrations/
+├── migrations/
+└── seed.ts
 docker-compose.yml
 ```
+
+- `graphql/` regroupe les modèles, resolvers et le guard de l'API GraphQL.
+- `prisma/seed.ts` insère les données de démonstration.
 
 - `main.ts` démarre l'application et configure Swagger et la validation des données.
 - `app.module.ts` est le module racine qui assemble tous les autres modules.

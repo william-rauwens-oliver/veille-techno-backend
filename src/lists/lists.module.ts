@@ -5,5 +5,6 @@ import { ListsController } from './lists.controller.js';
 @Module({
   controllers: [ListsController],
   providers: [ListsService],
+  exports: [ListsService],
 })
 export class ListsModule {}
