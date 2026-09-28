@@ -102,7 +102,7 @@ Une fois l'API lancée, ouvrez `http://localhost:3000/api`.
 
 Vous y trouvez tous les endpoints regroupés par tag (`auth`, `users`, `lists`, `cards`). Pour tester les routes protégées :
 
-1. Appelez `POST /auth/login` (ou `/auth/register`) pour obtenir un `accessToken`.
+1. Appelez `POST /api/auth/login` (ou `/api/auth/register`) pour obtenir un `accessToken`.
 2. Cliquez sur **Authorize** en haut de Swagger et collez le token.
 3. Toutes les requêtes suivantes seront authentifiées.
 
@@ -121,39 +121,44 @@ User (id, email, name, password, role[USER|ADMIN], createdAt, updatedAt)
 
 ## Endpoints
 
-### Auth (`/auth`)
+Toutes les routes REST sont préfixées par `/api` (c'est aussi l'URL de la documentation Swagger).
 
-| Méthode | Route            | Auth | Description                      |
-| ------- | ---------------- | ---- | -------------------------------- |
-| POST    | `/auth/register` | —    | Inscrire un nouvel utilisateur   |
-| POST    | `/auth/login`    | —    | Se connecter et récupérer un JWT |
+### Auth (`/api/auth`)
 
-### Users (`/users`)
+| Méthode | Route                | Auth | Description                      |
+| ------- | -------------------- | ---- | -------------------------------- |
+| POST    | `/api/auth/register` | —    | Inscrire un nouvel utilisateur   |
+| POST    | `/api/auth/login`    | —    | Se connecter et récupérer un JWT |
 
-| Méthode | Route        | Auth        | Description                                            |
-| ------- | ------------ | ----------- | ----------------------------------------------------- |
-| GET     | `/users`     | JWT (ADMIN) | Lister tous les utilisateurs                           |
-| GET     | `/users/:id` | JWT         | Récupérer un utilisateur                               |
-| PATCH   | `/users/:id` | JWT         | Modifier un utilisateur (le champ `role` = admin only)|
+### Users (`/api/users`)
 
-### Lists (`/lists`)
+| Méthode | Route            | Auth        | Description                                            |
+| ------- | ---------------- | ----------- | ----------------------------------------------------- |
+| GET     | `/api/users/me`  | JWT         | Récupérer le profil de l'utilisateur connecté         |
+| GET     | `/api/users`     | JWT (ADMIN) | Lister tous les utilisateurs                           |
+| GET     | `/api/users/:id` | JWT         | Récupérer un utilisateur                               |
+| PATCH   | `/api/users/:id` | JWT         | Modifier un utilisateur (le champ `role` = admin only)|
 
-| Méthode | Route        | Auth | Description                           |
-| ------- | ------------ | ---- | ------------------------------------- |
-| POST    | `/lists`     | JWT  | Créer une liste                       |
-| GET     | `/lists`     | JWT  | Lister ses listes (avec leurs cartes) |
-| GET     | `/lists/:id` | JWT  | Récupérer une liste et ses cartes     |
-| PATCH   | `/lists/:id` | JWT  | Modifier une liste                    |
-| DELETE  | `/lists/:id` | JWT  | Supprimer une liste (et ses cartes)   |
+### Lists (`/api/lists`)
 
-### Cards (`/cards`)
+| Méthode | Route            | Auth | Description                           |
+| ------- | ---------------- | ---- | ------------------------------------- |
+| POST    | `/api/lists`     | JWT  | Créer une liste                       |
+| GET     | `/api/lists`     | JWT  | Lister ses listes (avec leurs cartes) |
+| GET     | `/api/lists/:id` | JWT  | Récupérer une liste et ses cartes     |
+| PATCH   | `/api/lists/:id` | JWT  | Modifier une liste                    |
+| DELETE  | `/api/lists/:id` | JWT  | Supprimer une liste (et ses cartes)   |
 
-| Méthode | Route        | Auth | Description                                        |
-| ------- | ------------ | ---- | ------------------------------------------------- |
-| POST    | `/cards`     | JWT  | Créer une carte dans une liste                    |
-| GET     | `/cards/:id` | JWT  | Récupérer une carte                               |
-| PATCH   | `/cards/:id` | JWT  | Modifier une carte (titre, description, position) |
-| DELETE  | `/cards/:id` | JWT  | Supprimer une carte                               |
+### Cards (`/api/cards` et `/api/lists/:listId/cards`)
+
+| Méthode | Route                      | Auth | Description                                        |
+| ------- | -------------------------- | ---- | ------------------------------------------------- |
+| GET     | `/api/lists/:listId/cards` | JWT  | Lister les cartes d'une liste                     |
+| POST    | `/api/lists/:listId/cards` | JWT  | Créer une carte dans une liste                    |
+| POST    | `/api/cards`               | JWT  | Créer une carte (`listId` dans le body)           |
+| GET     | `/api/cards/:id`           | JWT  | Récupérer une carte                               |
+| PATCH   | `/api/cards/:id`           | JWT  | Modifier une carte (titre, description, position) |
+| DELETE  | `/api/cards/:id`           | JWT  | Supprimer une carte                               |
 
 ## API GraphQL
 
@@ -188,7 +193,7 @@ mutation {
 
 ## Authentification et droits
 
-- L'authentification repose sur des **JWT Bearer**. Le token est renvoyé par `/auth/register` et `/auth/login`.
+- L'authentification repose sur des **JWT Bearer**. Le token est renvoyé par `/api/auth/register` et `/api/auth/login`.
 - Les routes protégées utilisent `AuthGuard` : il lit l'en-tête `Authorization`, vérifie le token avec `JwtService` et attache l'utilisateur à la requête.
 - La gestion des droits repose sur un rôle `USER` ou `ADMIN` :
   - Un utilisateur peut modifier son propre compte.
@@ -223,7 +228,7 @@ npm test
 NestJS s'appuie sur le runtime **non bloquant** de Node.js : les entrées/sorties (base de données, réseau) ne bloquent pas le thread principal, ce qui permet de tenir de nombreuses requêtes simultanées avec une faible empreinte mémoire. Plusieurs pistes permettent d'aller plus loin :
 
 - **Index de base de données** : ajouter des index Prisma sur les colonnes filtrées (`ownerId` des listes, `listId` des cartes) pour accélérer les lectures.
-- **Pagination** : paginer `GET /lists` et les cartes quand les volumes augmentent, plutôt que de tout renvoyer.
+- **Pagination** : paginer `GET /api/lists` et les cartes quand les volumes augmentent, plutôt que de tout renvoyer.
 - **Cache** : mettre en cache les réponses de lecture fréquentes (par exemple avec `@nestjs/cache-manager` ou Redis).
 - **Sélection de champs** : ne demander que les champs nécessaires (Prisma `select`, ou la sélection native de GraphQL) pour réduire la charge.
 - **Scalabilité horizontale** : l'API étant *stateless* (JWT), elle peut être répliquée derrière un load balancer sans session partagée.
