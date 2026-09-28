@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateCardDto } from './dto/create-card.dto.js';
+import { CreateCardInListDto } from './dto/create-card-in-list.dto.js';
 import { UpdateCardDto } from './dto/update-card.dto.js';
 
 @Injectable()
@@ -20,6 +21,32 @@ export class CardsService {
         description: dto.description,
         position: dto.position ?? 0,
         listId: dto.listId,
+      },
+    });
+  }
+
+  async findByList(ownerId: string, listId: string) {
+    await this.assertListOwnership(ownerId, listId);
+
+    return this.prisma.card.findMany({
+      where: { listId },
+      orderBy: { position: 'asc' },
+    });
+  }
+
+  async createInList(
+    ownerId: string,
+    listId: string,
+    dto: CreateCardInListDto,
+  ) {
+    await this.assertListOwnership(ownerId, listId);
+
+    return this.prisma.card.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+        position: dto.position ?? 0,
+        listId,
       },
     });
   }
