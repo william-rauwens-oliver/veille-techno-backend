@@ -23,6 +23,12 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get('me')
+  @ApiOperation({ summary: "Récupérer le profil de l'utilisateur connecté" })
+  findMe(@CurrentUser() user: AuthenticatedUser) {
+    return this.usersService.findOne(user.id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Récupérer un utilisateur' })
   findOne(@Param('id') id: string) {
