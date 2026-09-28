@@ -14,11 +14,13 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
+  app.setGlobalPrefix('api', { exclude: ['/'] });
+
   const config = new DocumentBuilder()
     .setTitle('Kanban Board API')
     .setDescription(
       "API REST d'un Kanban Board construite avec NestJS, Prisma et PostgreSQL. " +
-        'Connectez-vous via /auth/login, puis utilisez le token Bearer sur les autres routes.',
+        'Connectez-vous via /api/auth/login, puis utilisez le token Bearer sur les autres routes.',
     )
     .setVersion('1.0')
     .addBearerAuth()

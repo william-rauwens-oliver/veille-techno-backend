@@ -26,6 +26,7 @@ describe('Kanban API (intégration)', () => {
         transform: true,
       }),
     );
+    app.setGlobalPrefix('api', { exclude: ['/'] });
     await app.init();
     prisma = app.get(PrismaService);
   });
@@ -39,14 +40,14 @@ describe('Kanban API (intégration)', () => {
 
   it('refuse une inscription avec un email invalide (400)', async () => {
     await request(app.getHttpServer())
-      .post('/auth/register')
+      .post('/api/auth/register')
       .send({ email: 'pas-un-email', name: 'Jo', password: 'secret123' })
       .expect(400);
   });
 
   it('inscrit un utilisateur et renvoie un token (201)', async () => {
     const res = await request(app.getHttpServer())
-      .post('/auth/register')
+      .post('/api/auth/register')
       .send({ email, name: 'Test', password: 'secret123' })
       .expect(201);
 
@@ -58,18 +59,18 @@ describe('Kanban API (intégration)', () => {
 
   it('refuse la connexion avec un mauvais mot de passe (401)', async () => {
     await request(app.getHttpServer())
-      .post('/auth/login')
+      .post('/api/auth/login')
       .send({ email, password: 'mauvais' })
       .expect(401);
   });
 
   it('refuse l accès aux listes sans token (401)', async () => {
-    await request(app.getHttpServer()).get('/lists').expect(401);
+    await request(app.getHttpServer()).get('/api/lists').expect(401);
   });
 
   it('crée une liste (201)', async () => {
     const res = await request(app.getHttpServer())
-      .post('/lists')
+      .post('/api/lists')
       .set('Authorization', `Bearer ${token}`)
       .send({ title: 'To Do' })
       .expect(201);
@@ -80,7 +81,7 @@ describe('Kanban API (intégration)', () => {
 
   it('crée une carte dans la liste (201)', async () => {
     const res = await request(app.getHttpServer())
-      .post('/cards')
+      .post('/api/cards')
       .set('Authorization', `Bearer ${token}`)
       .send({ title: 'Ma tâche', listId })
       .expect(201);
@@ -91,7 +92,7 @@ describe('Kanban API (intégration)', () => {
 
   it('modifie la carte (200)', async () => {
     const res = await request(app.getHttpServer())
-      .patch(`/cards/${cardId}`)
+      .patch(`/api/cards/${cardId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ description: 'description mise à jour' })
       .expect(200);
@@ -101,7 +102,7 @@ describe('Kanban API (intégration)', () => {
 
   it('liste ses listes avec les cartes (200)', async () => {
     const res = await request(app.getHttpServer())
-      .get('/lists')
+      .get('/api/lists')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
@@ -111,7 +112,7 @@ describe('Kanban API (intégration)', () => {
 
   it('empêche un utilisateur de changer son propre rôle (403)', async () => {
     await request(app.getHttpServer())
-      .patch(`/users/${userId}`)
+      .patch(`/api/users/${userId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ role: 'ADMIN' })
       .expect(403);
@@ -119,12 +120,12 @@ describe('Kanban API (intégration)', () => {
 
   it('supprime la carte puis la liste (200)', async () => {
     await request(app.getHttpServer())
-      .delete(`/cards/${cardId}`)
+      .delete(`/api/cards/${cardId}`)
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     await request(app.getHttpServer())
-      .delete(`/lists/${listId}`)
+      .delete(`/api/lists/${listId}`)
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
   });

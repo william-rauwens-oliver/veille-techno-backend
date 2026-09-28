@@ -21,11 +21,12 @@ describe('GraphQL API (intégration)', () => {
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
     );
+    app.setGlobalPrefix('api', { exclude: ['/'] });
     await app.init();
     prisma = app.get(PrismaService);
 
     const res = await request(app.getHttpServer())
-      .post('/auth/register')
+      .post('/api/auth/register')
       .send({ email, name: 'GraphQL Tester', password: 'secret123' });
     token = res.body.accessToken;
     userId = res.body.user.id;
